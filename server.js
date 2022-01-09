@@ -4,19 +4,18 @@ const wsServer = new WebSocket.Server({
   port: PORT,
 });
 
-wsServer.on("connection", function (socket) {
+wsServer.on("connection", function (socket, req) {
   // Some feedback on the console
   console.log("A client just connected");
+  console.log(req.socket);
 
   // Attach some behavior to the incoming socket
   socket.on("message", function (msg) {
     console.log("Received message from client: " + msg);
-    // console.log(JSON.parse(msg));
-    // socket.send("Take this back: " + msg);
 
     // Broadcast that message to all connected clients
     wsServer.clients.forEach(function (client) {
-      client.send("Someone said: " + msg);
+      client.send(msg);
     });
   });
 
@@ -25,4 +24,4 @@ wsServer.on("connection", function (socket) {
   });
 });
 
-console.log(new Date() + " Server is listening on port " + PORT);
+console.log("Server is listening on port " + PORT);
