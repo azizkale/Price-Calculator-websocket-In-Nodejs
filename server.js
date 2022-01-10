@@ -4,19 +4,57 @@ const wsServer = new WebSocket.Server({
   port: PORT,
 });
 
-wsServer.on("connection", function (socket, req) {
+const lineReader = require("line-reader");
+const fs = require("fs");
+let json;
+
+wsServer.on("connection", async function (socket, req) {
   // Some feedback on the console
   console.log("A client just connected");
-  console.log(req.socket);
 
   // Attach some behavior to the incoming socket
-  socket.on("message", function (msg) {
+  await socket.on("message", function (msg) {
     console.log("Received message from client: " + msg);
+    //
+    json = JSON.parse(msg);
+    //all data from mobile device are saved in the Products.txt file======
+    //and no data from PC has ID
+    if (json.ID == "") {
+      fs.appendFile("Products.txt", "\n" + msg, function (err) {
+        if (err) {
+          // append failed
+        } else {
+          // done
+        }
+      });
+    }
 
-    // Broadcast that message to all connected clients
+    //
+    //
+
+    //
+    //
+    //======================================================================
+    // if the data comes from PC this data is deleted from Products.txt file
+    if (json.ID != "") {
+      lineReader.eachLine("Products.txt", async function (line) {
+        if (line != "") {
+        }
+      });
+    }
+    //
+    //
+    // Broadcast that message to all connected clients==========
     wsServer.clients.forEach(function (client) {
-      client.send(msg);
+      // the only messages from Mobile Device are boradcasted
+      // the messages from PC are not broadcasted
+      if (json.ID == "") {
+        client.send(msg);
+      }
     });
+    //==========================================================
+    //
+    //
   });
 
   socket.on("close", function () {
