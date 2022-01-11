@@ -17,44 +17,51 @@ wsServer.on("connection", async function (socket, req) {
     console.log("Received message from client: " + msg);
     //
     json = JSON.parse(msg);
+    //
+    //if data came from Mobile device while PC is close
+    // the data are saved on server. and once the pc is opened, data go to the PC by the request from PC with the info "requestInfo=connectingReq"
+    if (fs.existsSync("Products.txt") && json.requestInfo == "connectingReq") {
+      //if there is a Products.txt file, data of this file are sent to PC
+      lineReader.eachLine("Products.txt", (line, last) => {
+        try {
+          if (line != "") {
+            // let jsonObject = JSON.parse(line);
+            wsServer.clients.forEach(async function (client) {
+              await client.send(line);
+            });
+          }
+        } catch {}
+      });
+    }
+
     //all data from mobile device are saved in the Products.txt file======
-    //and no data from PC has ID
-    if (json.ID == "") {
-      fs.appendFile("Products.txt", "\n" + msg, function (err) {
-        if (err) {
-          // append failed
-        } else {
-          // done
-        }
-      });
-    }
+    //and no incoming data from PC has ID
 
-    //
-    //
+    switch (json.requestInfo) {
+      case "appReq":
+        fs.appendFile("Products.txt", "\n" + msg, function (err) {
+          if (err) {
+            // append failed
+          } else {
+            // done
+          }
+        });
+        wsServer.clients.forEach(function (client) {
+          client.send(msg);
+        });
+        break;
 
-    //
-    //
-    //======================================================================
-    // if the data comes from PC this data is deleted from Products.txt file
-    if (json.ID != "") {
-      lineReader.eachLine("Products.txt", async function (line) {
-        if (line != "") {
+      // if the saved data were sent to PC then the file Product.txt is removed from server
+      case "insertingReq":
+        if (fs.existsSync("Products.txt")) {
+          fs.unlink("Products.txt", (hata, data) => {
+            if (hata) {
+              throw hata;
+            }
+          });
         }
-      });
+        break;
     }
-    //
-    //
-    // Broadcast that message to all connected clients==========
-    wsServer.clients.forEach(function (client) {
-      // the only messages from Mobile Device are boradcasted
-      // the messages from PC are not broadcasted
-      if (json.ID == "") {
-        client.send(msg);
-      }
-    });
-    //==========================================================
-    //
-    //
   });
 
   socket.on("close", function () {
