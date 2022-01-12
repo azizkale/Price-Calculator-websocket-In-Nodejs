@@ -25,7 +25,6 @@ wsServer.on("connection", async function (socket, req) {
       lineReader.eachLine("Products.txt", (line, last) => {
         try {
           if (line != "") {
-            // let jsonObject = JSON.parse(line);
             wsServer.clients.forEach(async function (client) {
               await client.send(line);
             });
